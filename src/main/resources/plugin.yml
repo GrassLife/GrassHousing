@@ -1,0 +1,3 @@
+name: GrassHousing
+version: ${project.version}
+main: life.grass.grasshousing.GrassHousing
