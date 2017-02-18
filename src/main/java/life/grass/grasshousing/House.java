@@ -1,21 +1,19 @@
 package life.grass.grasshousing;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
-/**
- * Created by takah on 2016/12/13.
- */
 public class House {
-    private String playerName;
+    private Player player;
     private Location centralLocation;
 
-    public House(String name, Location location){
-        this.playerName = name;
+    public House(Player player, Location location){
+        this.player = player;
         this.centralLocation = location;
     }
 
-    public String getPlayerName() {
-        return playerName;
+    public Player getPlayer() {
+        return player;
     }
 
     public Location getCentralLocation() {
