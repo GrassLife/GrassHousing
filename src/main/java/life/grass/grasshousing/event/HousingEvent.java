@@ -27,14 +27,14 @@ public class HousingEvent implements Listener {
     @EventHandler
     public void onDestroyingHouse(BlockBreakEvent event) {
 
-        HashMap<Location, House> houseMap = HousingManager.getHouseMap();
         Location blockLocation = event.getBlock().getLocation();
 
-        if (houseMap.containsKey(blockLocation)) {
+        if (HousingManager.isHouseExists(blockLocation)) {
+            House house = HousingManager.findHouse(blockLocation);
             /*
             デバッグ用
              */
-            event.getPlayer().sendMessage("This House has been destroyed !! PITY!! Owner: " + houseMap.get(blockLocation).getPlayer().getName());
+            event.getPlayer().sendMessage("This House has been destroyed !! PITY!! Owner: " + house.getPlayer().getName());
             /*
             ここまで
              */

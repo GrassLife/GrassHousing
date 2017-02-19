@@ -18,7 +18,11 @@ public class HousingManager {
         houseMap.remove(location);
     }
 
-    public static HashMap<Location, House> getHouseMap() {
-        return houseMap;
+    public static House findHouse(Location location) {
+        return houseMap.get(location);
+    }
+
+    public static boolean isHouseExists(Location location) {
+        return houseMap.containsKey(location);
     }
 }
