@@ -1,22 +1,32 @@
 package life.grass.grasshousing;
 
+import com.google.gson.JsonObject;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 
 public class House {
-    private Player player;
+    private String playerName;
     private Location centralLocation;
 
-    public House(Player player, Location location){
-        this.player = player;
+    public House(String playerName, Location location){
+        this.playerName = playerName;
         this.centralLocation = location;
     }
 
-    public Player getPlayer() {
-        return player;
+    public String getPlayerName() {
+        return playerName;
     }
 
     public Location getCentralLocation() {
         return centralLocation;
+    }
+
+    public String getJsonString() {
+        return"{" +
+                "\"playerName\": \"" + playerName + "\"," +
+                "\"worldName\": \"" + centralLocation.getWorld().toString() + "\"," +
+                "\"x\": " + String.valueOf(centralLocation.getX()) + "," +
+                "\"y\": " + String.valueOf(centralLocation.getY()) + "," +
+                "\"z\": " + String.valueOf(centralLocation.getZ()) +
+                "}";
     }
 }

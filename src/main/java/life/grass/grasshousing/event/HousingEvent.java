@@ -1,9 +1,12 @@
 package life.grass.grasshousing.event;
 
+import com.google.gson.Gson;
+import life.grass.grassblock.GrassBlock;
 import life.grass.grasshousing.House;
 import life.grass.grasshousing.HousingManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -15,12 +18,14 @@ public class HousingEvent implements Listener {
     @EventHandler
     public void onHousing(BlockPlaceEvent event){
         if (event.getBlockPlaced().getType() == Material.COAL_ORE){
-            House house = new House(event.getPlayer(), event.getBlock().getLocation());
-            HousingManager.addHouse(house);
+            House house = new House(event.getPlayer().getName(), event.getBlock().getLocation());
             /*
             デバッグ用
              */
-            event.getPlayer().sendMessage("This block is set as center of your house!! Welcome home!! Owner: " + event.getPlayer().getName());
+            Block block = event.getBlock();
+            event.getPlayer().sendMessage("This block is set as center of your house?? Welcome home!! Owner: " + event.getPlayer().getName());
+            Gson gson = new Gson();
+            GrassBlock.getBlockManager().registerBlockInfo(block).setJson(house.getJsonString());
         }
     }
 
@@ -29,16 +34,16 @@ public class HousingEvent implements Listener {
 
         Location blockLocation = event.getBlock().getLocation();
 
-        if (HousingManager.isHouseExists(blockLocation)) {
-            House house = HousingManager.findHouse(blockLocation);
+        if (event.getBlock().getType() == Material.COAL_ORE) {
+            House house = HousingManager.createHouse(GrassBlock.getBlockManager().getBlockInfo(blockLocation.getBlockX(), blockLocation.getBlockY(), blockLocation.getBlockZ(), blockLocation.getWorld()).getJson());
             /*
             デバッグ用
              */
-            event.getPlayer().sendMessage("This House has been destroyed !! PITY!! Owner: " + house.getPlayer().getName());
+            event.getPlayer().sendMessage("This House has been destroyed !! PITY!! Owner: " + house.getPlayerName());
             /*
             ここまで
              */
-            HousingManager.removeHouse(blockLocation);
+            GrassBlock.getBlockManager().unregisterBlockInfo(event.getBlock());
 
         }
     }
