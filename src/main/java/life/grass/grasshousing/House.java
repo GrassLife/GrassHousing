@@ -2,6 +2,7 @@ package life.grass.grasshousing;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class House {
                 "}";
     }
 
-    public String fetchPlayerName() {
-        return Bukkit.getPlayer(playerUUID).getName();
+    public Player fetchPlayer() {
+        return Bukkit.getPlayer(playerUUID);
     }
 }
