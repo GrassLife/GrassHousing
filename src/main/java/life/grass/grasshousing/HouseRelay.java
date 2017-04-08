@@ -3,15 +3,17 @@ package life.grass.grasshousing;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import java.util.UUID;
+
 public class HouseRelay {
-    private String playerName;
+    private String playerUUID;
     private String worldName;
     private double x;
     private double y;
     private double z;
 
-    public HouseRelay( String playerName, String worldName, double x, double y, double z ) {
-        this.playerName = playerName;
+    public HouseRelay( String playerUUID, String worldName, double x, double y, double z ) {
+        this.playerUUID = playerUUID;
         this.worldName = worldName;
         this.x = x;
         this.y = y;
@@ -19,7 +21,7 @@ public class HouseRelay {
     }
 
     public House makeHouse() {
-        Location location = new Location(Bukkit.getWorld(this.worldName), this.x, this.y, this.z);
-        return new House(this.playerName, location);
+        Location location = new Location(Bukkit.getWorld(worldName), x, y, z);
+        return new House(UUID.fromString(playerUUID), location);
     }
 }

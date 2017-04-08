@@ -1,19 +1,21 @@
 package life.grass.grasshousing;
 
-import com.google.gson.JsonObject;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import java.util.UUID;
+
 public class House {
-    private String playerName;
+    private UUID playerUUID;
     private Location centralLocation;
 
-    public House(String playerName, Location location){
-        this.playerName = playerName;
+    public House(UUID playerUUID, Location location){
+        this.playerUUID = playerUUID;
         this.centralLocation = location;
     }
 
-    public String getPlayerName() {
-        return playerName;
+    public UUID getPlayerUUID() {
+        return playerUUID;
     }
 
     public Location getCentralLocation() {
@@ -22,11 +24,15 @@ public class House {
 
     public String getJsonString() {
         return"{" +
-                "\"playerName\": \"" + playerName + "\"," +
+                "\"playerUUID\": \"" + playerUUID.toString() + "\"," +
                 "\"worldName\": \"" + centralLocation.getWorld().toString() + "\"," +
                 "\"x\": " + String.valueOf(centralLocation.getX()) + "," +
                 "\"y\": " + String.valueOf(centralLocation.getY()) + "," +
                 "\"z\": " + String.valueOf(centralLocation.getZ()) +
                 "}";
+    }
+
+    public String fetchPlayerName() {
+        return Bukkit.getPlayer(playerUUID).getName();
     }
 }
