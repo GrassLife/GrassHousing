@@ -1,5 +1,7 @@
 package life.grass.grasshousing;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -24,13 +26,14 @@ public class House {
     }
 
     public String getJsonString() {
-        return"{" +
-                "\"playerUUID\": \"" + playerUUID.toString() + "\"," +
-                "\"worldName\": \"" + centralLocation.getWorld().toString() + "\"," +
-                "\"x\": " + String.valueOf(centralLocation.getX()) + "," +
-                "\"y\": " + String.valueOf(centralLocation.getY()) + "," +
-                "\"z\": " + String.valueOf(centralLocation.getZ()) +
-                "}";
+        JsonObject json = new JsonObject();
+        json.addProperty("playerUUID", playerUUID.toString() );
+        json.addProperty("worldName", centralLocation.getWorld().toString() );
+        json.addProperty("x", centralLocation.getX() );
+        json.addProperty("y", centralLocation.getY() );
+        json.addProperty("z", centralLocation.getZ() );
+
+        return new Gson().toJson(json);
     }
 
     public Player fetchPlayer() {
