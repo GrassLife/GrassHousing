@@ -1,4 +1,4 @@
-package life.grass.grasshousing;
+package life.grass.grasshousing.house;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
