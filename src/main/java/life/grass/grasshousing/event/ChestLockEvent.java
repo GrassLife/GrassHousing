@@ -1,7 +1,9 @@
 package life.grass.grasshousing.event;
 
+import com.google.gson.Gson;
 import life.grass.grasshousing.ChestLockManager;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
@@ -12,6 +14,10 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class ChestLockEvent implements Listener {
     @EventHandler
@@ -45,7 +51,10 @@ public class ChestLockEvent implements Listener {
 
                 } else {
 
-                    player.sendMessage("この泥棒!! これは" + player.getName() + "のチェストだ!!");
+                    Gson gson = new Gson();
+                    HashMap<String, String> str = gson.fromJson(chest.getCustomName(), HashMap.class);
+
+                    player.sendMessage("この泥棒!! これは" + Bukkit.getPlayer(UUID.fromString(str.get("ownerUUID"))).getName() + "のチェストだ!!");
                     event.setCancelled(true);
 
                 }
