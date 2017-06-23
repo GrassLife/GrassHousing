@@ -1,4 +1,4 @@
-package life.grass.grasshousing;
+package life.grass.grasshousing.house;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

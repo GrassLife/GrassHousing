@@ -1,7 +1,7 @@
 package life.grass.grasshousing.event;
 
 import life.grass.grassblock.GrassBlock;
-import life.grass.grasshousing.House;
+import life.grass.grasshousing.house.House;
 import life.grass.grasshousing.HousingManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
