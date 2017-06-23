@@ -2,6 +2,7 @@ package life.grass.grasshousing;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
@@ -57,8 +58,17 @@ public class ChestLockManager {
         
     }
 
-    private static boolean isDoubleChest(Chest chest) {
+    public static boolean isDoubleChest(Chest chest) {
         return chest.getInventory().getHolder() instanceof DoubleChest;
+    }
+
+    public static boolean isChestLocked(Chest chest) {
+        return !StringUtils.isEmpty(chest.getCustomName());
+    }
+
+    public static boolean isAnotherPartLocked(Chest chest) {
+        DoubleChest doubleChest = (DoubleChest) chest.getInventory().getHolder();
+        return isChestLocked(((Chest) doubleChest.getLeftSide())) || isChestLocked(((Chest) doubleChest.getRightSide()));
     }
 
     private static void setDoubleChestName(DoubleChest doubleChest, String name) {
