@@ -23,7 +23,7 @@ public class ChestLockEvent implements Listener {
     @EventHandler
     public void onRightClickChest(PlayerInteractEvent event) {
 
-        if (event.getClickedBlock().getType().equals(Material.CHEST) && event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock().getType().equals(Material.CHEST)) {
 
             Player player = event.getPlayer();
             Chest chest = (Chest) event.getClickedBlock().getState();
@@ -54,7 +54,7 @@ public class ChestLockEvent implements Listener {
                     Gson gson = new Gson();
                     HashMap<String, String> str = gson.fromJson(chest.getCustomName(), HashMap.class);
 
-                    player.sendMessage("この泥棒!! これは" + Bukkit.getPlayer(UUID.fromString(str.get("ownerUUID"))).getName() + "のチェストだ!!");
+                    player.sendTitle("", "この泥棒!! これは" + Bukkit.getPlayer(UUID.fromString(str.get("ownerUUID"))).getName() + "のチェストだ!!", 10, 70, 20);
                     event.setCancelled(true);
 
                 }
