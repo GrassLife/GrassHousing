@@ -9,24 +9,20 @@ import org.bukkit.entity.Player;
 
 public class ChestLockManager {
 
-    private static final String CHEST_LOCK_MESSAGE = "チェストをロックしています... 所有者: ";
-    private static final String LOCK_COMPLETE_MESSAGE = "チェストがロックされました.";
-    private static final String CHEST_UNLOCK_MESSAGE = "チェストをアンロックしています...";
+    private static final String LOCK_COMPLETE_MESSAGE = "チェストがロックされました. 所有者: ";
     private static final String UNLOCK_COMPLETE_MESSAGE = "チェストがアンロックされました.";
 
     public static void registerChest(Player owner, Chest chest) {
 
         if (isDoubleChest(chest)) {
 
-            owner.sendMessage(CHEST_LOCK_MESSAGE + owner.getName());
             setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), chestLockJson(owner));
-            owner.sendMessage(LOCK_COMPLETE_MESSAGE);
+            owner.sendTitle("", LOCK_COMPLETE_MESSAGE + owner.getName(), 10, 70, 20);
 
         } else {
 
-            owner.sendMessage(CHEST_LOCK_MESSAGE + owner.getName());
             chest.setCustomName(chestLockJson(owner));
-            owner.sendMessage(LOCK_COMPLETE_MESSAGE);
+            owner.sendTitle("", LOCK_COMPLETE_MESSAGE + owner.getName(), 10, 70, 20);
 
         }
 
@@ -36,15 +32,13 @@ public class ChestLockManager {
 
         if (isDoubleChest(chest)) {
 
-            owner.sendMessage(CHEST_UNLOCK_MESSAGE);
             setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), "");
-            owner.sendMessage(UNLOCK_COMPLETE_MESSAGE);
+            owner.sendTitle("", UNLOCK_COMPLETE_MESSAGE, 10, 70, 20);
 
         } else {
 
-            owner.sendMessage(CHEST_UNLOCK_MESSAGE);
             chest.setCustomName("");
-            owner.sendMessage(UNLOCK_COMPLETE_MESSAGE);
+            owner.sendTitle("", UNLOCK_COMPLETE_MESSAGE, 10, 70, 20);
 
         }
 
