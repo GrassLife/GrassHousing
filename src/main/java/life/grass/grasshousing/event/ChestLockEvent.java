@@ -40,7 +40,12 @@ public class ChestLockEvent implements Listener {
 
             } else {
 
-                if (chest.getCustomName().equals(ChestLockManager.chestLockJson(player))) {
+
+                Gson gson = new Gson();
+                HashMap<String, String> str = gson.fromJson(chest.getCustomName(), HashMap.class);
+                String playerUUID = str.get("ownerUUID");
+
+                if (playerUUID.equals(player.getUniqueId().toString())) {
 
                     if (materialInHand.equals(Material.WOOD_BUTTON)) {
 
@@ -51,12 +56,15 @@ public class ChestLockEvent implements Listener {
 
                 } else {
 
-                    Gson gson = new Gson();
-                    HashMap<String, String> str = gson.fromJson(chest.getCustomName(), HashMap.class);
 
-                    player.sendTitle("", "この泥棒!! これは" + Bukkit.getPlayer(UUID.fromString(str.get("ownerUUID"))).getName() + "のチェストだ!!", 10, 70, 20);
+                    if (!StringUtils.isEmpty(str.get("ownerName"))) {
+                        player.sendTitle("", "この泥棒!! これは" + str.get("ownerName") + "のチェストだ!!", 10, 70, 20);
+                    } else {
+                        // 不具合解消以前に設置されたチェストに関して、ownerNameが記録されていないものに関する例外処理
+                        player.sendTitle("", "この泥棒!! これは君のチェストじゃない!!", 10, 70, 20);
+
+                    }
                     event.setCancelled(true);
-
                 }
             }
         }

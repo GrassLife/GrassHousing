@@ -48,6 +48,7 @@ public class ChestLockManager {
         
         JsonObject json = new JsonObject();
         json.addProperty("ownerUUID", owner.getUniqueId().toString());
+        json.addProperty("ownerName", owner.getName());
         return new Gson().toJson(json);
         
     }
