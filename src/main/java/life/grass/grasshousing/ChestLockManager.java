@@ -3,9 +3,12 @@ package life.grass.grasshousing;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 public class ChestLockManager {
 
@@ -71,5 +74,9 @@ public class ChestLockManager {
         ((Chest) doubleChest.getRightSide()).setCustomName(name);
         ((Chest) doubleChest.getLeftSide()).setCustomName(name);
 
+    }
+
+    public static boolean isClickedChest(PlayerInteractEvent event) {
+        return event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock().getType().equals(Material.CHEST);
     }
 }

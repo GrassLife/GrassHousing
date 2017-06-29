@@ -1,6 +1,7 @@
 package life.grass.grasshousing.event;
 
 import com.google.gson.Gson;
+import life.grass.grasshousing.ChestLockGUI;
 import life.grass.grasshousing.ChestLockManager;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
@@ -14,6 +15,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.DoubleChestInventory;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +27,7 @@ public class ChestLockEvent implements Listener {
     @EventHandler
     public void onRightClickChest(PlayerInteractEvent event) {
 
-        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock().getType().equals(Material.CHEST)) {
+        if (ChestLockManager.isClickedChest(event)) {
 
             Player player = event.getPlayer();
             Chest chest = (Chest) event.getClickedBlock().getState();
@@ -51,6 +55,12 @@ public class ChestLockEvent implements Listener {
 
                         ChestLockManager.unregisterChest(player, chest);
                         event.setCancelled(true);
+
+                    } else if (materialInHand.equals(materialInHand.STONE_BUTTON)) {
+                        event.setCancelled(true);
+
+                        ChestLockGUI gui = new ChestLockGUI(chest);
+                        player.openInventory(gui.getInventory());
 
                     }
 
