@@ -73,5 +73,23 @@
             <version>1.12-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.comphenix.protocol</groupId>
+            <artifactId>ProtocolLib-API</artifactId>
+            <version>4.3.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/ProtocolLib-4.3.0.jar</systemPath>
+        </dependency>
+
+        <!--
+        <dependency>
+            <groupId>life.grass</groupId>
+            <artifactId>GrassBlock</artifactId>
+            <version>4.3.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/GrassBlock.jar</systemPath>
+        </dependency>
+        -->
     </dependencies>
 </project>
