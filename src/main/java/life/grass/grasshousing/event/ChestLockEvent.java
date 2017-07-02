@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import life.grass.grasshousing.ChestLockGUI;
 import life.grass.grasshousing.ChestLockManager;
+import oracle.jvm.hotspot.jfr.JavaStringConstantPool;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -125,14 +126,16 @@ public class ChestLockEvent implements Listener {
 
             if (ChestLockManager.isAnotherPartLocked(chest)) {
 
+                JsonParser parser = new JsonParser();
+
                 DoubleChest doubleChest = (DoubleChest) chest.getInventory().getHolder();
                 String key = ChestLockManager.isChestLocked((Chest) doubleChest.getLeftSide()) ?
                         ((Chest) doubleChest.getLeftSide()).getCustomName() :
                         ((Chest) doubleChest.getRightSide()).getCustomName();
 
-                if (key.equals(ChestLockManager.chestLockJson(event.getPlayer()))) {
+                if (player.getUniqueId().toString().equals(parser.parse(key).getAsJsonObject().get("ownerUUID").getAsString())) {
 
-                    ChestLockManager.registerChest(player, chest);
+                    ChestLockManager.setDoubleChestName(doubleChest, key);
 
                 } else {
 
@@ -232,9 +235,7 @@ public class ChestLockEvent implements Listener {
 
             chestJsonObject.add("allowedPlayer", allowedJsonArray);
 
-            chest.setCustomName(gson.toJson(chestJsonObject));
-
+            ChestLockManager.updateWhiteList(chest, gson.toJson(chestJsonObject));
         }
-
     }
 }

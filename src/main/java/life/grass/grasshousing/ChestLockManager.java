@@ -34,6 +34,20 @@ public class ChestLockManager {
 
     }
 
+    public static void updateWhiteList(Chest chest, String jsonString) {
+
+        if (isDoubleChest(chest)) {
+
+            setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), jsonString);
+
+        } else {
+
+            chest.setCustomName(jsonString);
+
+        }
+
+    }
+
     public static void unregisterChest(Player owner, Chest chest) {
 
         if (isDoubleChest(chest)) {
@@ -72,7 +86,7 @@ public class ChestLockManager {
         return isChestLocked(((Chest) doubleChest.getLeftSide())) || isChestLocked(((Chest) doubleChest.getRightSide()));
     }
 
-    private static void setDoubleChestName(DoubleChest doubleChest, String name) {
+    public static void setDoubleChestName(DoubleChest doubleChest, String name) {
 
         ((Chest) doubleChest.getRightSide()).setCustomName(name);
         ((Chest) doubleChest.getLeftSide()).setCustomName(name);
