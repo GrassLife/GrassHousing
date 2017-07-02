@@ -1,6 +1,7 @@
 package life.grass.grasshousing.event;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
+import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import life.grass.grasshousing.ChestLockGUI;
 import life.grass.grasshousing.ChestLockManager;
 import org.apache.commons.lang.StringUtils;
@@ -8,20 +9,24 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.Skull;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class ChestLockEvent implements Listener {
     @EventHandler
@@ -44,10 +49,9 @@ public class ChestLockEvent implements Listener {
 
             } else {
 
-
-                Gson gson = new Gson();
-                HashMap<String, String> str = gson.fromJson(chest.getCustomName(), HashMap.class);
-                String playerUUID = str.get("ownerUUID");
+                JsonParser parser = new JsonParser();
+                JsonObject chestJson = parser.parse(chest.getCustomName()).getAsJsonObject();
+                String playerUUID = chestJson.get("ownerUUID").getAsString();
 
                 if (playerUUID.equals(player.getUniqueId().toString())) {
 
@@ -57,6 +61,7 @@ public class ChestLockEvent implements Listener {
                         event.setCancelled(true);
 
                     } else if (materialInHand.equals(materialInHand.STONE_BUTTON)) {
+
                         event.setCancelled(true);
 
                         ChestLockGUI gui = new ChestLockGUI(chest);
@@ -64,17 +69,37 @@ public class ChestLockEvent implements Listener {
 
                     }
 
+
+                } else if (chestJson.get("allowedPlayer") != null) {
+
+                    JsonArray allowedPlayerArray = chestJson.get("allowedPlayer").getAsJsonArray();
+                    boolean isAllowed = false;
+
+                    for (int i = 0; i < allowedPlayerArray.size(); i++) {
+                        if (player.getUniqueId().toString().equals(allowedPlayerArray.get(i).getAsJsonObject().get("UUID").getAsString())) {
+                            isAllowed = true;
+                            break;
+                        }
+                    }
+
+                    if (!isAllowed) {
+
+                        event.setCancelled(true);
+                        player.sendTitle("", "この泥棒!! これは" + chestJson.get("ownerName").getAsString() + "のチェストだ!!", 10, 70, 20);
+
+                    }
+
                 } else {
 
+                    event.setCancelled(true);
 
-                    if (!StringUtils.isEmpty(str.get("ownerName"))) {
-                        player.sendTitle("", "この泥棒!! これは" + str.get("ownerName") + "のチェストだ!!", 10, 70, 20);
+                    if (!StringUtils.isEmpty(chestJson.get("ownerName").getAsString())) {
+                        player.sendTitle("", "この泥棒!! これは" + chestJson.get("ownerName").getAsString() + "のチェストだ!!", 10, 70, 20);
                     } else {
                         // 不具合解消以前に設置されたチェストに関して、ownerNameが記録されていないものに関する例外処理
                         player.sendTitle("", "この泥棒!! これは君のチェストじゃない!!", 10, 70, 20);
 
                     }
-                    event.setCancelled(true);
                 }
             }
         }
@@ -117,5 +142,99 @@ public class ChestLockEvent implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler
+    public void onClickWhitelistGUI(InventoryClickEvent event) {
+
+        if (event.getInventory().getHolder() instanceof ChestLockGUI) {
+            event.setCancelled(true);
+            Inventory inventory = event.getInventory();
+            ItemStack clickedItem = event.getCurrentItem();
+
+            if (clickedItem != null) {
+                if (ChestLockManager.isAllowedPart(event.getSlot())) {
+                    inventory.setItem(event.getSlot(), new ItemStack(Material.AIR));
+
+                    for (int i = 28 ; i <= 44 ; i++) {
+                        if (inventory.getItem(i) == null) {
+                            inventory.setItem(i, clickedItem);
+                            break;
+                        }
+                    }
+                } else if (ChestLockManager.isNotAllowedPart(event.getSlot())) {
+
+                    inventory.setItem(event.getSlot(), new ItemStack(Material.AIR));
+
+                    for (int j = 1 ; j <= 17 ; j++) {
+                        if (inventory.getItem(j) == null) {
+                            inventory.setItem(j, clickedItem);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onCloseWhitelistGUI(InventoryCloseEvent event) {
+        Inventory inventory = event.getInventory();
+        JsonParser parser = new JsonParser();
+
+        if (inventory.getHolder() instanceof ChestLockGUI) {
+
+            JsonObject chestJsonObject =
+                    parser.parse(((ChestLockGUI) inventory.getHolder())
+                            .getChest().getCustomName()).getAsJsonObject();
+
+            JsonArray allowedJsonArray = new JsonArray();
+
+            if (chestJsonObject.has("allowedPlayer"))
+                allowedJsonArray = chestJsonObject.get("allowedPlayer").getAsJsonArray();
+
+            for (int i = 1; i <= 17; i++) {
+                if (inventory.getItem(i) != null) {
+
+                    ItemStack item = inventory.getItem(i);
+                    SkullMeta skullMeta = (SkullMeta) item.getItemMeta();
+
+                    if (!ChestLockManager.isAllowed(skullMeta.getOwner(), allowedJsonArray)) {
+
+                        Player allowedPlayer = Bukkit.getPlayer(skullMeta.getOwner());
+                        JsonObject allowedJson = ChestLockManager.allowedPlayerJson(allowedPlayer.getName(), allowedPlayer.getUniqueId().toString());
+                        allowedJsonArray.add(allowedJson);
+                    }
+                }
+            }
+
+            for (int j = 28; j <= 44; j++) {
+
+                if (inventory.getItem(j) != null) {
+                    ItemStack item = inventory.getItem(j);
+                    SkullMeta skullMeta = (SkullMeta) item.getItemMeta();
+                    String skullName = skullMeta.getOwner();
+
+                    if (ChestLockManager.isAllowed(skullMeta.getOwner(), allowedJsonArray)) {
+
+                        for (int k = 0; k < allowedJsonArray.size(); k++) {
+                            JsonObject json = allowedJsonArray.get(k).getAsJsonObject();
+                            if (skullName.equals(json.getAsJsonObject().get("name").getAsString())) {
+                                allowedJsonArray.remove(k);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Chest chest = ((ChestLockGUI) inventory.getHolder()).getChest();
+            Gson gson = new Gson();
+
+            chestJsonObject.add("allowedPlayer", allowedJsonArray);
+
+            chest.setCustomName(gson.toJson(chestJsonObject));
+
+        }
+
     }
 }

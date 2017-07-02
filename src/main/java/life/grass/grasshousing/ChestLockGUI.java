@@ -1,59 +1,85 @@
 package life.grass.grasshousing;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.*;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ChestLockGUI implements InventoryHolder {
 
     private Inventory inventory;
+    private Chest chest;
 
     public ChestLockGUI(Chest chest) {
-        Gson gson = new Gson();
-        Map<String, String> chestPlayerDataMap = gson.fromJson(chest.getCustomName(), new TypeToken<Map<String, String>>() {
-        }.getType());
 
+        this.chest = chest;
+        initializeInventory(chest);
 
-        this.inventory = Bukkit.createInventory(this, 54, "WhiteListSetting");
+    }
 
-        for (int i = 0; i <= 5; i++) {
-            this.inventory.setItem((i * 9) + 4, new ItemStack(Material.THIN_GLASS));
-        }
+    private void initializeInventory(Chest chest) {
+
+        this.inventory = Bukkit.createInventory(this, 45, "WhiteListSetting");
+
+        JsonParser parser = new JsonParser();
+        JsonObject customNameJson = parser.parse(chest.getCustomName()).getAsJsonObject();
+
+        Player owner = Bukkit.getPlayer(UUID.fromString(customNameJson.get("ownerUUID").getAsString()));
+
+        ChestLockManager.setBorder(3, this.inventory);
         this.inventory.setItem(0, new ItemStack(Material.STAINED_CLAY, 1, (short) 5));
-        this.inventory.setItem(5, new ItemStack(Material.STAINED_CLAY, 1, (short) 1));
+        this.inventory.setItem(27, new ItemStack(Material.STAINED_CLAY, 1, (short) 1));
 
-        System.out.println(chestPlayerDataMap.toString());
-        Map<String, String> allowedPlayer = (Map<String, String>) chestPlayerDataMap.get("allowedPlayer");
+        JsonArray allowedPlayer;
 
-        allowedPlayer.forEach((name, uuid) -> {
-            ItemStack playerHead = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
-            SkullMeta playerSkullMeta = (SkullMeta) playerHead.getItemMeta();
-            playerSkullMeta.setOwner(name);
-            playerSkullMeta.setDisplayName(name);
-            playerHead.setItemMeta(playerSkullMeta);
-            this.inventory.setItem(2, playerHead);
-        });
+        JsonElement allowedPlayerJsonElement = customNameJson.get("allowedPlayer");
 
-        List<Player> nearbyPlayers = getNearbyPlayers(chest.getLocation(), 10);
+        if (allowedPlayerJsonElement != null) {
+            allowedPlayer = allowedPlayerJsonElement.getAsJsonArray();
+            allowedPlayer.forEach((json) -> {
+
+                ItemStack playerHead = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+                SkullMeta playerSkullMeta = (SkullMeta) playerHead.getItemMeta();
+                playerSkullMeta.setOwner(json.getAsJsonObject().get("name").getAsString());
+                playerSkullMeta.setDisplayName(json.getAsJsonObject().get("name").getAsString());
+                playerHead.setItemMeta(playerSkullMeta);
+                for (int i = 1 ; i <= 17 ; i++) {
+                    if (this.inventory.getItem(i) == null) {
+                        this.inventory.setItem(i, playerHead);
+                        break;
+                    }
+                }
+            });
+        }
+
+        List<Entity> nearbyPlayers = getNearbyPlayers(owner);
         nearbyPlayers.forEach(p -> {
+            if (allowedPlayerJsonElement != null && allowedPlayerJsonElement.getAsJsonArray()
+                    .contains(ChestLockManager.allowedPlayerJson(p.getName(), p.getUniqueId().toString()))) {
+                return;
+            }
+
             ItemStack playerHead = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
             SkullMeta playerSkullMeta = (SkullMeta) playerHead.getItemMeta();
             playerSkullMeta.setOwner(p.getName());
             playerSkullMeta.setDisplayName(p.getName());
             playerHead.setItemMeta(playerSkullMeta);
-            this.inventory.setItem(6, playerHead);
+            for (int j = 27 ; j <= 44 ; j++) {
+                if (this.inventory.getItem(j) == null) {
+                    this.inventory.setItem(j, playerHead);
+                    break;
+                }
+            }
         });
 
     }
@@ -62,21 +88,15 @@ public class ChestLockGUI implements InventoryHolder {
         return inventory;
     }
 
-    public List<Player> getNearbyPlayers(Location loc, int distance) {
-        double squaredDistance = Math.pow(distance, 2);
-        List<Player> list = new ArrayList<Player>();
-        for(Player p: Bukkit.getOnlinePlayers())
-            if(calculateSquaredDistanceBetween(loc, p.getLocation()) < squaredDistance) list.add(p);
-        return list;
-    }
+    public List<Entity> getNearbyPlayers(Player player) {
 
-    public static double calculateSquaredDistanceBetween(Location loc1, Location loc2) {
-        double distance;
-
-        return distance = Math.pow(loc1.getX() - loc2.getX(), 2)
-                + Math.pow(loc1.getY() - loc2.getY(), 2)
-                + Math.pow(loc1.getZ() - loc2.getZ(), 2);
+        return player.getNearbyEntities(30, 30, 30).stream().filter(p ->
+                p instanceof Player
+        ).collect(Collectors.toList());
 
     }
 
+    public Chest getChest() {
+        return chest;
+    }
 }
