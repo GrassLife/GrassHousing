@@ -116,7 +116,7 @@ public class ChestLockManager {
     }
     public static void setBorder(int row, Inventory inventory) {
         for (int i = row * 6; i < (row * 6) + 9; i++) {
-            inventory.setItem(i, new ItemStack(Material.THIN_GLASS, 1, (short) 15);
+            inventory.setItem(i, new ItemStack(Material.THIN_GLASS, 1, (short) 15));
         }
     }
 }
