@@ -34,7 +34,7 @@ public class ChestLockManager {
 
     }
 
-    public static void updateWhiteList(Chest chest, String jsonString) {
+    public static void updateCustomName(Chest chest, String jsonString) {
 
         if (isDoubleChest(chest)) {
 
@@ -45,8 +45,8 @@ public class ChestLockManager {
             chest.setCustomName(jsonString);
 
         }
-
     }
+
 
     public static void unregisterChest(Player owner, Chest chest) {
 
@@ -69,6 +69,7 @@ public class ChestLockManager {
         JsonObject json = new JsonObject();
         json.addProperty("ownerUUID", owner.getUniqueId().toString());
         json.addProperty("ownerName", owner.getName());
+        json.addProperty("securityLevel", "locked");
         return new Gson().toJson(json);
         
     }
