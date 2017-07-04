@@ -5,12 +5,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
+import org.bukkit.Nameable;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 public class ChestLockManager {
@@ -18,46 +21,51 @@ public class ChestLockManager {
     private static final String LOCK_COMPLETE_MESSAGE = "チェストがロックされました. 所有者: ";
     private static final String UNLOCK_COMPLETE_MESSAGE = "チェストがアンロックされました.";
 
-    public static void registerChest(Player owner, Chest chest) {
+    public static void registerChest(Player owner, InventoryHolder inventoryHolder) {
 
-        if (isDoubleChest(chest)) {
+        if (isDoubleChest(inventoryHolder)) {
 
-            setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), chestLockJson(owner));
+            setDoubleChestName((DoubleChest) inventoryHolder.getInventory().getHolder(), chestLockJson(owner));
             owner.sendTitle("", LOCK_COMPLETE_MESSAGE + owner.getName(), 10, 70, 20);
 
         } else {
 
-            chest.setCustomName(chestLockJson(owner));
+            Nameable nameable = inventoryHolder instanceof ShulkerBox ? (ShulkerBox) inventoryHolder : (Chest) inventoryHolder;
+
+            nameable.setCustomName(chestLockJson(owner));
             owner.sendTitle("", LOCK_COMPLETE_MESSAGE + owner.getName(), 10, 70, 20);
 
         }
 
     }
 
-    public static void updateCustomName(Chest chest, String jsonString) {
+    public static void updateCustomName(InventoryHolder inventoryHolder, String jsonString) {
 
-        if (isDoubleChest(chest)) {
+        if (isDoubleChest(inventoryHolder)) {
 
-            setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), jsonString);
+            setDoubleChestName((DoubleChest) inventoryHolder.getInventory().getHolder(), jsonString);
 
         } else {
 
-            chest.setCustomName(jsonString);
+            Nameable nameable = inventoryHolder instanceof ShulkerBox ? (ShulkerBox) inventoryHolder : (Chest) inventoryHolder;
+            nameable.setCustomName(jsonString);
 
         }
     }
 
 
-    public static void unregisterChest(Player owner, Chest chest) {
+    public static void unregisterChest(Player owner, InventoryHolder inventoryHolder) {
 
-        if (isDoubleChest(chest)) {
+        if (isDoubleChest(inventoryHolder)) {
 
-            setDoubleChestName((DoubleChest) chest.getInventory().getHolder(), "");
+            setDoubleChestName((DoubleChest) inventoryHolder.getInventory().getHolder(), "");
             owner.sendTitle("", UNLOCK_COMPLETE_MESSAGE, 10, 70, 20);
 
         } else {
 
-            chest.setCustomName("");
+            Nameable nameable = inventoryHolder instanceof ShulkerBox ? (ShulkerBox) inventoryHolder : (Chest) inventoryHolder;
+
+            nameable.setCustomName("");
             owner.sendTitle("", UNLOCK_COMPLETE_MESSAGE, 10, 70, 20);
 
         }
@@ -74,12 +82,13 @@ public class ChestLockManager {
         
     }
 
-    public static boolean isDoubleChest(Chest chest) {
-        return chest.getInventory().getHolder() instanceof DoubleChest;
+    public static boolean isDoubleChest(InventoryHolder inventoryHolder) {
+        if (inventoryHolder instanceof ShulkerBox) return false;
+        return ((Chest) inventoryHolder).getInventory().getHolder() instanceof DoubleChest;
     }
 
-    public static boolean isChestLocked(Chest chest) {
-        return !StringUtils.isEmpty(chest.getCustomName());
+    public static boolean isChestLocked(Nameable nameable) {
+        return !StringUtils.isEmpty(nameable.getCustomName());
     }
 
     public static boolean isAnotherPartLocked(Chest chest) {
@@ -95,7 +104,10 @@ public class ChestLockManager {
     }
 
     public static boolean isClickedChest(PlayerInteractEvent event) {
-        return event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock().getType().equals(Material.CHEST);
+        return event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
+                && (event.getClickedBlock().getType().equals(Material.CHEST)
+                || event.getClickedBlock().getType().equals(Material.TRAPPED_CHEST)
+                || event.getClickedBlock().getType().toString().contains("SHULKER_BOX"));
     }
 
     public static JsonObject allowedPlayerJson(String name, String uuid) {

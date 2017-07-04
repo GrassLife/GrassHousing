@@ -3,7 +3,9 @@ package life.grass.grasshousing;
 import com.google.gson.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Nameable;
 import org.bukkit.block.Chest;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -18,21 +20,23 @@ import java.util.stream.Collectors;
 public class ChestLockGUI implements InventoryHolder {
 
     private Inventory inventory;
-    private Chest chest;
+    private InventoryHolder inventoryHolder;
 
-    public ChestLockGUI(Chest chest) {
+    public ChestLockGUI(InventoryHolder inventoryHolder) {
 
-        this.chest = chest;
-        initializeInventory(chest);
+        this.inventoryHolder = inventoryHolder;
+        initializeInventory(inventoryHolder);
 
     }
 
-    private void initializeInventory(Chest chest) {
+    private void initializeInventory(InventoryHolder inventoryHolder) {
 
         this.inventory = Bukkit.createInventory(this, 45, "WhiteListSetting");
 
+        Nameable nameable = inventoryHolder instanceof ShulkerBox ? (ShulkerBox) inventoryHolder : (Chest) inventoryHolder;
+
         JsonParser parser = new JsonParser();
-        JsonObject customNameJson = parser.parse(chest.getCustomName()).getAsJsonObject();
+        JsonObject customNameJson = parser.parse(nameable.getCustomName()).getAsJsonObject();
 
         Player owner = Bukkit.getPlayer(UUID.fromString(customNameJson.get("ownerUUID").getAsString()));
 
@@ -96,7 +100,7 @@ public class ChestLockGUI implements InventoryHolder {
 
     }
 
-    public Chest getChest() {
-        return chest;
+    public InventoryHolder getInventoryHolder() {
+        return inventoryHolder;
     }
 }
