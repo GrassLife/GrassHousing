@@ -6,8 +6,11 @@ import life.grass.grasshousing.ChestLockManager;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Nameable;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,6 +20,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
@@ -27,14 +31,25 @@ public class ChestLockEvent implements Listener {
         if (ChestLockManager.isClickedChest(event)) {
 
             Player player = event.getPlayer();
-            Chest chest = (Chest) event.getClickedBlock().getState();
+            Nameable nameable;
+            InventoryHolder inventoryHolder;
+
+            if (event.getClickedBlock().getState() instanceof ShulkerBox) {
+
+                nameable = (ShulkerBox) event.getClickedBlock().getState();
+                inventoryHolder = (ShulkerBox) event.getClickedBlock().getState();
+
+            } else {
+                nameable = (Chest) event.getClickedBlock().getState();
+                inventoryHolder = (Chest) event.getClickedBlock().getState();
+            }
             Material materialInHand = event.getMaterial();
 
-            if (!ChestLockManager.isChestLocked(chest)) {
+            if (!ChestLockManager.isChestLocked(nameable)) {
 
                 if (materialInHand.equals(Material.WOOD_BUTTON)) {
 
-                    ChestLockManager.registerChest(player, chest);
+                    ChestLockManager.registerChest(player, inventoryHolder);
                     event.setCancelled(true);
 
                 }
@@ -43,49 +58,49 @@ public class ChestLockEvent implements Listener {
 
                 JsonParser parser = new JsonParser();
                 Gson gson = new Gson();
-                JsonObject chestJson = parser.parse(chest.getCustomName()).getAsJsonObject();
+                JsonObject chestJson = parser.parse(nameable.getCustomName()).getAsJsonObject();
                 String playerUUID = chestJson.get("ownerUUID").getAsString();
-                String securityLevel = chestJson.get("securityLevel").getAsString();
+                JsonElement securityLevel = chestJson.get("securityLevel");
 
                 if (playerUUID.equals(player.getUniqueId().toString())) {
 
                     if (materialInHand.equals(Material.WOOD_BUTTON)) {
 
-                        ChestLockManager.unregisterChest(player, chest);
+                        ChestLockManager.unregisterChest(player, inventoryHolder);
                         event.setCancelled(true);
 
                     } else if (materialInHand.equals(Material.STONE_BUTTON)) {
 
                         event.setCancelled(true);
 
-                        ChestLockGUI gui = new ChestLockGUI(chest);
+                        ChestLockGUI gui = new ChestLockGUI(inventoryHolder);
                         player.openInventory(gui.getInventory());
 
                     } else if (materialInHand.equals(Material.LEVER)) {
 
                         event.setCancelled(true);
 
-                       if (chestJson.get("securityLevel").getAsString().equals("locked")) {
+                       if (securityLevel == null || securityLevel.getAsString().equals("locked")) {
                             chestJson.remove("securityLevel");
                             chestJson.addProperty("securityLevel", "shown");
-                            ChestLockManager.updateCustomName(chest, gson.toJson(chestJson));
+                            ChestLockManager.updateCustomName(inventoryHolder, gson.toJson(chestJson));
                             player.sendTitle("", "セキュリティが公開に設定されました", 20, 70, 10);
-                        } else if (chestJson.get("securityLevel").getAsString().equals("shown")) {
+                        } else if (securityLevel.getAsString().equals("shown")) {
                             chestJson.remove("securityLevel");
                             chestJson.addProperty("securityLevel", "fullOpen");
-                            ChestLockManager.updateCustomName(chest, gson.toJson(chestJson));
+                            ChestLockManager.updateCustomName(inventoryHolder, gson.toJson(chestJson));
                             player.sendTitle("", "セキュリティがフルオープンに設定されました", 20, 70, 10);
-                        } else if (chestJson.get("securityLevel").getAsString().equals("fullOpen")) {
+                        } else if (securityLevel.getAsString().equals("fullOpen")) {
                             chestJson.remove("securityLevel");
                             chestJson.addProperty("securityLevel", "locked");
-                            ChestLockManager.updateCustomName(chest, gson.toJson(chestJson));
+                            ChestLockManager.updateCustomName(inventoryHolder, gson.toJson(chestJson));
                             player.sendTitle("", "セキュリティが非公開に設定されました", 20, 70, 10);
 
                         }
 
                     }
 
-                } else if (securityLevel.equals("fullOpen") || securityLevel.equals("shown")) {
+                } else if (securityLevel != null && (securityLevel.getAsString().equals("fullOpen") || securityLevel.getAsString().equals("shown"))) {
 
                     return;
 
@@ -101,18 +116,23 @@ public class ChestLockEvent implements Listener {
                         }
                     }
 
-                    if (!isAllowed && securityLevel.equals("locked")) {
+                    if (!isAllowed && ((securityLevel != null && securityLevel.getAsString().equals("locked")) || securityLevel == null)) {
 
                         event.setCancelled(true);
-                        player.sendTitle("", "この泥棒!! これは" + chestJson.get("ownerName").getAsString() + "のチェストだ!!", 10, 70, 20);
+                        if (chestJson.get("ownerName") == null) {
 
+                            player.sendTitle("", "この泥棒!! これは君のチェストじゃない!!", 10, 70, 20);
+                        } else {
+
+                            player.sendTitle("", "この泥棒!! これは" + chestJson.get("ownerName").getAsString() + "のチェストだ!!", 10, 70, 20);
+                        }
                     }
 
                 } else {
 
                     event.setCancelled(true);
 
-                    if (!StringUtils.isEmpty(chestJson.get("ownerName").getAsString())) {
+                    if (chestJson.get("ownerName") != null) {
                         player.sendTitle("", "この泥棒!! これは" + chestJson.get("ownerName").getAsString() + "のチェストだ!!", 10, 70, 20);
                     } else {
                         // 不具合解消以前に設置されたチェストに関して、ownerNameが記録されていないものに関する例外処理
@@ -126,8 +146,9 @@ public class ChestLockEvent implements Listener {
 
     @EventHandler
     public void onBreakChest(BlockBreakEvent event) {
-        if (event.getBlock().getType().equals(Material.CHEST) &&
-                !StringUtils.isEmpty(((Chest) event.getBlock().getState()).getCustomName())) {
+        if ((event.getBlock().getType().equals(Material.CHEST) || event.getBlock().getType().equals(Material.TRAPPED_CHEST) || event.getBlock().getType().toString().contains("SHULKER_BOX")) &&
+                !StringUtils.isEmpty((event.getBlock().getType().toString().contains("SHULKER_BOX") ? (ShulkerBox) event.getBlock().getState() :
+                        (Chest) event.getBlock().getState()).getCustomName())) {
 
             event.getPlayer().sendMessage("このチェストはロックされています. あなたが所有者であれば、壊す前にロックを解除してください.");
             event.setCancelled(true);
@@ -137,7 +158,7 @@ public class ChestLockEvent implements Listener {
     @EventHandler
     public void onExtendChest(BlockPlaceEvent event) {
 
-        if (event.getBlockPlaced().getType().equals(Material.CHEST) && ChestLockManager.isDoubleChest(((Chest) event.getBlockPlaced().getState()))) {
+        if ((event.getBlockPlaced().getType().equals(Material.CHEST) || event.getBlockPlaced().getType().equals(Material.TRAPPED_CHEST)) && ChestLockManager.isDoubleChest(((Chest) event.getBlockPlaced().getState()))) {
 
             Chest chest = (Chest) event.getBlockPlaced().getState();
             Player player = event.getPlayer();
@@ -167,25 +188,42 @@ public class ChestLockEvent implements Listener {
 
     @EventHandler
     public void onClickChestInventory(InventoryClickEvent event) {
-        if (event.getInventory().getHolder() instanceof Chest) {
+        if (event.getInventory().getHolder() instanceof Chest || event.getInventory().getHolder() instanceof ShulkerBox) {
             JsonParser parser = new JsonParser();
-            JsonObject chestJson = parser.parse(((Chest) event.getInventory().getHolder()).getCustomName()).getAsJsonObject();
+            String chestJsonString = event.getInventory().getHolder() instanceof ShulkerBox ?
+                    ((ShulkerBox) event.getInventory().getHolder()).getCustomName() :
+                    ((Chest) event.getInventory().getHolder()).getCustomName();
+            JsonObject chestJson;
+            if (chestJsonString == null) {
+                return;
+            } else {
+                chestJson = parser.parse(chestJsonString).getAsJsonObject();
+            }
             String ownerUUID = chestJson.get("ownerUUID").getAsString();
-            String securityLevel = chestJson.get("securityLevel").getAsString();
-            JsonArray allowedPlayers = chestJson.get("allowedPlayer").getAsJsonArray();
+            String securityLevel = "locked";
+            if (chestJson.get("securityLevel") != null) securityLevel = chestJson.get("securityLevel").getAsString();
+            JsonElement allowedPlayers = chestJson.get("allowedPlayer");
             if (securityLevel.equals("shown")
-                    && !ChestLockManager.isAllowed(event.getWhoClicked().getName(), allowedPlayers)
+                    && (allowedPlayers == null || !ChestLockManager.isAllowed(event.getWhoClicked().getName(), allowedPlayers.getAsJsonArray()))
                     && !ownerUUID.equals(event.getWhoClicked().getUniqueId().toString())) {
                 event.setCancelled(true);
             }
-        } else if (event.getInventory().getHolder() instanceof DoubleChest) {
+            
+        }else if (event.getInventory().getHolder() instanceof DoubleChest) {
             JsonParser parser = new JsonParser();
-            JsonObject chestJson = parser.parse(((Chest) ((DoubleChest) event.getInventory().getHolder()).getLeftSide()).getCustomName()).getAsJsonObject();
+            String chestJsonString = ((Chest) ((DoubleChest) event.getInventory().getHolder()).getLeftSide()).getCustomName();
+            JsonObject chestJson;
+            if (chestJsonString == null) {
+                return;
+            } else {
+                chestJson = parser.parse(chestJsonString).getAsJsonObject();
+            }
             String ownerUUID = chestJson.get("ownerUUID").getAsString();
-            JsonArray allowedPlayers = chestJson.get("allowedPlayer").getAsJsonArray();
-            String securityLevel = chestJson.get("securityLevel").getAsString();
+            JsonElement allowedPlayers = chestJson.get("allowedPlayer");
+            String securityLevel = "locked";
+            if (chestJson.get("securityLevel") != null) securityLevel = chestJson.get("securityLevel").getAsString();
             if (securityLevel.equals("shown")
-                    && !ChestLockManager.isAllowed(event.getWhoClicked().getName(), allowedPlayers)
+                    && (allowedPlayers == null || !ChestLockManager.isAllowed(event.getWhoClicked().getName(), allowedPlayers.getAsJsonArray()))
                     && !ownerUUID.equals(event.getWhoClicked().getUniqueId().toString())) {
 
                 event.setCancelled(true);
@@ -233,9 +271,11 @@ public class ChestLockEvent implements Listener {
 
         if (inventory.getHolder() instanceof ChestLockGUI) {
 
-            JsonObject chestJsonObject =
-                    parser.parse(((ChestLockGUI) inventory.getHolder())
-                            .getChest().getCustomName()).getAsJsonObject();
+            InventoryHolder inventoryHolder = ((ChestLockGUI) inventory.getHolder())
+                    .getInventoryHolder();
+            Nameable nameable = inventoryHolder instanceof ShulkerBox ? (ShulkerBox) inventoryHolder : (Chest) inventoryHolder;
+
+            JsonObject chestJsonObject = parser.parse(nameable.getCustomName()).getAsJsonObject();
 
             JsonArray allowedJsonArray = new JsonArray();
 
@@ -276,12 +316,11 @@ public class ChestLockEvent implements Listener {
                 }
             }
 
-            Chest chest = ((ChestLockGUI) inventory.getHolder()).getChest();
             Gson gson = new Gson();
 
             chestJsonObject.add("allowedPlayer", allowedJsonArray);
 
-            ChestLockManager.updateCustomName(chest, gson.toJson(chestJsonObject));
+            ChestLockManager.updateCustomName(inventoryHolder, gson.toJson(chestJsonObject));
         }
     }
 }
