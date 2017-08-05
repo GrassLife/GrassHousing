@@ -22,6 +22,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ChestLockEvent implements Listener {
     @EventHandler
     public void onRightClickChest(PlayerInteractEvent event) {
@@ -176,8 +180,8 @@ public class ChestLockEvent implements Listener {
                     && !ownerUUID.equals(event.getWhoClicked().getUniqueId().toString())) {
                 event.setCancelled(true);
             }
-            
-        }else if (event.getInventory().getHolder() instanceof DoubleChest) {
+
+        } else if (event.getInventory().getHolder() instanceof DoubleChest) {
             JsonParser parser = new JsonParser();
             String chestJsonString = ((Chest) ((DoubleChest) event.getInventory().getHolder()).getLeftSide()).getCustomName();
             JsonObject chestJson;
@@ -211,7 +215,7 @@ public class ChestLockEvent implements Listener {
                 if (ChestLockManager.isAllowedPart(event.getSlot())) {
                     inventory.setItem(event.getSlot(), new ItemStack(Material.AIR));
 
-                    for (int i = 28 ; i <= 44 ; i++) {
+                    for (int i = 28; i <= 44; i++) {
                         if (inventory.getItem(i) == null) {
                             inventory.setItem(i, clickedItem);
                             break;
@@ -221,7 +225,7 @@ public class ChestLockEvent implements Listener {
 
                     inventory.setItem(event.getSlot(), new ItemStack(Material.AIR));
 
-                    for (int j = 1 ; j <= 17 ; j++) {
+                    for (int j = 1; j <= 17; j++) {
                         if (inventory.getItem(j) == null) {
                             inventory.setItem(j, clickedItem);
                             break;
